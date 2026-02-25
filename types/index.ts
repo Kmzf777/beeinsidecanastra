@@ -65,6 +65,7 @@ export interface PaidAccount {
   valor: number;
   dataPagamento: string; // "YYYY-MM-DD"
   contaOrigem: 1 | 2;
+  fornecedor: string;
   categoria?: "Despesa" | "Custo de Produto" | "Ignorar"; // populated in Story 3.2
 }
 

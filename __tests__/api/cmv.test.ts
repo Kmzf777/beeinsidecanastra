@@ -97,12 +97,23 @@ describe("POST /api/cmv", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 400 when a CMV item has non-positive cmvUnitario", async () => {
+  it("returns 400 when a CMV item has zero cmvUnitario", async () => {
     const req = await makePostRequest({
       cmvs: [{ productName: "Camiseta", cmvUnitario: 0 }],
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
+  });
+
+  it("accepts negative cmvUnitario values", async () => {
+    const mock = buildSupabaseMock(null, { error: null });
+    mockCreateServiceClient.mockReturnValue(mock as unknown as ReturnType<typeof createServiceClient>);
+
+    const req = await makePostRequest({
+      cmvs: [{ productName: "Camiseta", cmvUnitario: -5 }],
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
   });
 
   it("upserts CMVs and returns 200 on success", async () => {

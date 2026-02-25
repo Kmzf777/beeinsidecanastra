@@ -11,6 +11,7 @@ const accounts: PaidAccount[] = [
     valor: 3000,
     dataPagamento: '2026-01-10',
     contaOrigem: 1,
+    fornecedor: 'Imobiliária XYZ',
   },
   {
     id: '102-1',
@@ -18,6 +19,7 @@ const accounts: PaidAccount[] = [
     valor: 1500,
     dataPagamento: '2026-01-15',
     contaOrigem: 1,
+    fornecedor: 'Fornecedor ABC',
   },
   {
     id: '103-2',
@@ -25,6 +27,7 @@ const accounts: PaidAccount[] = [
     valor: 500,
     dataPagamento: '2026-01-20',
     contaOrigem: 2,
+    fornecedor: '',
   },
 ];
 
@@ -62,7 +65,7 @@ describe('PaidAccountsList', () => {
       expect(screen.getByRole('columnheader', { name: /Descrição/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /Valor/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /Data de Pagamento/i })).toBeInTheDocument();
-      expect(screen.getByRole('columnheader', { name: /Conta Origem/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /Fornecedor/i })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: /Categoria/i })).toBeInTheDocument();
     });
 
@@ -71,10 +74,18 @@ describe('PaidAccountsList', () => {
       expect(screen.getByText('10/01/2026')).toBeInTheDocument();
     });
 
-    it('shows conta origem label', () => {
+    it('shows fornecedor name', () => {
       renderList();
-      expect(screen.getAllByText('Conta 1').length).toBeGreaterThan(0);
-      expect(screen.getByText('Conta 2')).toBeInTheDocument();
+      expect(screen.getByText('Imobiliária XYZ')).toBeInTheDocument();
+      expect(screen.getByText('Fornecedor ABC')).toBeInTheDocument();
+    });
+
+    it('shows dash when fornecedor is empty', () => {
+      renderList();
+      // Frete has empty fornecedor, should show "—"
+      const rows = screen.getAllByRole('row');
+      const freteRow = rows.find((r) => r.textContent?.includes('Frete'));
+      expect(freteRow?.textContent).toContain('—');
     });
 
     it('renders the save button', () => {

@@ -134,7 +134,7 @@ export function PaidAccountsList({ accounts, initialCategories, onSaveAndContinu
               <th className="px-4 py-3">Descrição</th>
               <th className="px-4 py-3 text-right">Valor (R$)</th>
               <th className="px-4 py-3 text-right">Data de Pagamento</th>
-              <th className="px-4 py-3 text-center">Conta Origem</th>
+              <th className="px-4 py-3 text-center">Fornecedor</th>
               <th className="px-4 py-3 text-center">Categoria</th>
             </tr>
           </thead>
@@ -154,7 +154,7 @@ export function PaidAccountsList({ accounts, initialCategories, onSaveAndContinu
                     {formatDate(account.dataPagamento)}
                   </td>
                   <td className="px-4 py-3 text-center text-zinc-500">
-                    Conta {account.contaOrigem}
+                    {account.fornecedor || '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div

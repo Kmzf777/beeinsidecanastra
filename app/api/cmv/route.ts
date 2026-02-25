@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
   }
 
   for (const item of cmvs) {
-    if (typeof item.productName !== "string" || typeof item.cmvUnitario !== "number" || item.cmvUnitario <= 0) {
+    if (typeof item.productName !== "string" || typeof item.cmvUnitario !== "number" || item.cmvUnitario === 0 || isNaN(item.cmvUnitario)) {
       return NextResponse.json(
-        { error: "Dados inválidos: productName (string) e cmvUnitario (number > 0) são obrigatórios." },
+        { error: "Dados inválidos: productName (string) e cmvUnitario (number != 0) são obrigatórios." },
         { status: 400 }
       );
     }

@@ -13,11 +13,10 @@ function formatBRL(value: number): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
-function validateCmv(rawValue: string, valorUnitario: number): string {
+function validateCmv(rawValue: string): string {
   if (!rawValue || rawValue.trim() === '') return '';
   const num = parseFloat(rawValue);
-  if (isNaN(num) || num <= 0) return 'CMV deve ser maior que zero';
-  if (num >= valorUnitario) return `CMV deve ser menor que ${formatBRL(valorUnitario)}`;
+  if (isNaN(num) || num === 0) return 'CMV não pode ser zero';
   return '';
 }
 
@@ -26,7 +25,7 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
     const init: Record<string, string> = {};
     for (const p of products) {
       const saved = initialCmvs[p.nomeProduto];
-      init[p.nomeProduto] = saved && saved > 0 ? String(saved) : '';
+      init[p.nomeProduto] = saved !== undefined && saved !== 0 ? String(saved) : '';
     }
     return init;
   });
@@ -35,12 +34,12 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
 
   const pendingCount = products.filter((p) => {
     const v = values[p.nomeProduto];
-    return !v || parseFloat(v) <= 0;
+    return !v || v.trim() === '' || parseFloat(v) === 0 || isNaN(parseFloat(v));
   }).length;
 
   function handleChange(product: ProductSale, rawValue: string) {
     setValues((prev) => ({ ...prev, [product.nomeProduto]: rawValue }));
-    const err = validateCmv(rawValue, product.valorUnitario);
+    const err = validateCmv(rawValue);
     setErrors((prev) => ({ ...prev, [product.nomeProduto]: err }));
   }
 
@@ -49,7 +48,7 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
     for (const p of products) {
       const v = values[p.nomeProduto] ?? '';
       if (v) {
-        const err = validateCmv(v, p.valorUnitario);
+        const err = validateCmv(v);
         if (err) newErrors[p.nomeProduto] = err;
       }
     }
@@ -62,7 +61,7 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
     const cmvs = products
       .filter((p) => {
         const v = values[p.nomeProduto];
-        return v && parseFloat(v) > 0;
+        return v && v.trim() !== '' && !isNaN(parseFloat(v)) && parseFloat(v) !== 0;
       })
       .map((p) => ({
         productName: p.nomeProduto,
@@ -101,7 +100,7 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
           </thead>
           <tbody>
             {products.map((product) => {
-              const isPending = !values[product.nomeProduto] || parseFloat(values[product.nomeProduto]) <= 0;
+              const isPending = !values[product.nomeProduto] || values[product.nomeProduto].trim() === '' || parseFloat(values[product.nomeProduto]) === 0 || isNaN(parseFloat(values[product.nomeProduto]));
               const error = errors[product.nomeProduto];
 
               return (
@@ -121,7 +120,6 @@ export function ProductCMVTable({ products, initialCmvs, onSaveAndContinue }: Pr
                     <div className="flex flex-col items-end gap-1">
                       <input
                         type="number"
-                        min="0"
                         step="0.01"
                         value={values[product.nomeProduto] ?? ''}
                         onChange={(e) => handleChange(product, e.target.value)}

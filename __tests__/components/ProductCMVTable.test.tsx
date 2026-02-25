@@ -101,7 +101,7 @@ describe('ProductCMVTable', () => {
   });
 
   describe('validation', () => {
-    it('shows error when CMV is not a positive number', async () => {
+    it('accepts negative CMV values without error', async () => {
       const user = userEvent.setup();
       renderTable();
 
@@ -109,22 +109,10 @@ describe('ProductCMVTable', () => {
       await user.clear(input);
       await user.type(input, '-5');
 
-      expect(screen.getByText(/CMV deve ser maior que zero/i)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it('shows error when CMV equals the sale price', async () => {
-      const user = userEvent.setup();
-      renderTable();
-
-      const input = screen.getByLabelText('CMV de Camiseta');
-      await user.clear(input);
-      await user.type(input, '50'); // Camiseta valorUnitario = 50
-
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByRole('alert').textContent).toMatch(/menor que/i);
-    });
-
-    it('shows error when CMV exceeds the sale price', async () => {
+    it('accepts CMV greater than or equal to the sale price', async () => {
       const user = userEvent.setup();
       renderTable();
 
@@ -132,29 +120,21 @@ describe('ProductCMVTable', () => {
       await user.clear(input);
       await user.type(input, '99'); // > 50
 
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-
-    it('clears error when valid value is entered after invalid one', async () => {
-      const user = userEvent.setup();
-      renderTable();
-
-      const input = screen.getByLabelText('CMV de Camiseta');
-      await user.type(input, '99');
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-
-      await user.clear(input);
-      await user.type(input, '20');
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it('does not call onSaveAndContinue when there are validation errors', async () => {
+    it('saves negative CMV values successfully', async () => {
       const user = userEvent.setup();
-      const { onSave } = renderTable({ initialCmvs: { Camiseta: 99, Calça: 20 } });
-      // Camiseta CMV 99 >= valorUnitario 50 — invalid
+      const { onSave } = renderTable({ initialCmvs: { Camiseta: -5, Calça: 20 } });
 
       await user.click(screen.getByRole('button', { name: /Salvar e Continuar/i }));
-      expect(onSave).not.toHaveBeenCalled();
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          { productName: 'Camiseta', cmvUnitario: -5 },
+          { productName: 'Calça', cmvUnitario: 20 },
+        ])
+      );
     });
   });
 
@@ -207,12 +187,12 @@ describe('ProductCMVTable', () => {
       expect(screen.getByLabelText('CMV de Calça')).toBeInTheDocument();
     });
 
-    it('input is marked aria-invalid when it has an error', async () => {
+    it('input is marked aria-invalid when value is zero', async () => {
       const user = userEvent.setup();
       renderTable();
 
       const input = screen.getByLabelText('CMV de Camiseta');
-      await user.type(input, '-1');
+      await user.type(input, '0');
 
       expect(input).toHaveAttribute('aria-invalid', 'true');
     });

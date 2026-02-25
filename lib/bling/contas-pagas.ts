@@ -79,7 +79,8 @@ export async function fetchPaidAccountsForAccount(
   if (paidItems.length === 0) return [];
 
   // Step 3: Fetch detail for each paid item to get historico (description)
-  const BATCH_SIZE = 5;
+  // (rate limiter in BlingClient controls pacing to avoid 429)
+  const BATCH_SIZE = 2;
   const accounts: PaidAccount[] = [];
 
   for (let i = 0; i < paidItems.length; i += BATCH_SIZE) {
@@ -100,12 +101,15 @@ export async function fetchPaidAccountsForAccount(
         detail?.numeroDocumento ||
         `Conta #${listItem.id}`;
 
+      const fornecedor = detail?.contato?.nome || '';
+
       accounts.push({
         id: `${listItem.id}-${accountNumber}`,
         descricao,
         valor: listItem.valor,
         dataPagamento: listItem.vencimento,
         contaOrigem: accountNumber,
+        fornecedor,
       });
     }
   }
@@ -114,22 +118,23 @@ export async function fetchPaidAccountsForAccount(
 }
 
 /**
- * Fetches paid accounts from all connected accounts in parallel,
- * then returns a single consolidated list sorted by dataPagamento desc.
+ * Fetches paid accounts from all connected accounts sequentially
+ * to avoid overwhelming the Bling API rate limits.
+ * Returns a single consolidated list sorted by dataPagamento desc.
  */
 export async function fetchAllAccountsPaidAccounts(
   accountNumbers: (1 | 2)[],
   month: number,
   year: number
 ): Promise<PaidAccount[]> {
-  const results = await Promise.all(
-    accountNumbers.map((accountNumber) => {
-      const client = new BlingClient(accountNumber);
-      return fetchPaidAccountsForAccount(client, accountNumber, month, year);
-    })
-  );
+  const allAccounts: PaidAccount[] = [];
 
-  const consolidated = results.flat();
-  consolidated.sort((a, b) => b.dataPagamento.localeCompare(a.dataPagamento));
-  return consolidated;
+  for (const accountNumber of accountNumbers) {
+    const client = new BlingClient(accountNumber);
+    const accounts = await fetchPaidAccountsForAccount(client, accountNumber, month, year);
+    allAccounts.push(...accounts);
+  }
+
+  allAccounts.sort((a, b) => b.dataPagamento.localeCompare(a.dataPagamento));
+  return allAccounts;
 }

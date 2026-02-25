@@ -109,9 +109,10 @@ export async function fetchProductItemsForAccount(
     return allNfes.flatMap((nfe) => extractItems(nfe.itens, accountNumber));
   }
 
-  // Step 3: List doesn't include items — fetch each NF-e detail
+  // Step 3: List doesn't include items — fetch each NF-e detail sequentially
+  // (rate limiter in BlingClient controls pacing to avoid 429)
   console.log(`[notas-fiscais] List has no items, fetching ${allNfes.length} detail(s)...`);
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 2;
   const items: RawProductItem[] = [];
 
   for (let i = 0; i < allNfes.length; i += BATCH_SIZE) {
@@ -135,19 +136,21 @@ export async function fetchProductItemsForAccount(
 }
 
 /**
- * Fetches NF-e product items from all connected accounts in parallel.
+ * Fetches NF-e product items from all connected accounts sequentially
+ * to avoid overwhelming the Bling API rate limits.
  */
 export async function fetchAllAccountsProductItems(
   accountNumbers: (1 | 2)[],
   month: number,
   year: number
 ): Promise<RawProductItem[]> {
-  const results = await Promise.all(
-    accountNumbers.map((accountNumber) => {
-      const client = new BlingClient(accountNumber);
-      return fetchProductItemsForAccount(client, accountNumber, month, year);
-    })
-  );
+  const allItems: RawProductItem[] = [];
 
-  return results.flat();
+  for (const accountNumber of accountNumbers) {
+    const client = new BlingClient(accountNumber);
+    const items = await fetchProductItemsForAccount(client, accountNumber, month, year);
+    allItems.push(...items);
+  }
+
+  return allItems;
 }

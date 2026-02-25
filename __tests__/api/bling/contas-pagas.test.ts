@@ -22,8 +22,8 @@ function makeRequest(params: Record<string, string>) {
 }
 
 const sampleAccounts: PaidAccount[] = [
-  { id: "1-1", descricao: "Aluguel", valor: 2000, dataPagamento: "2026-02-05", contaOrigem: 1 },
-  { id: "2-2", descricao: "Internet", valor: 150, dataPagamento: "2026-02-10", contaOrigem: 2 },
+  { id: "1-1", descricao: "Aluguel", valor: 2000, dataPagamento: "2026-02-05", contaOrigem: 1, fornecedor: "Imobiliária XYZ" },
+  { id: "2-2", descricao: "Internet", valor: 150, dataPagamento: "2026-02-10", contaOrigem: 2, fornecedor: "Telecom SA" },
 ];
 
 describe("GET /api/bling/contas-pagas", () => {
